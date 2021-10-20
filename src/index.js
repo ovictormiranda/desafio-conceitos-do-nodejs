@@ -34,15 +34,15 @@ app.post('/users', (request, response) => {
     return response.status(400).json({ error: "Já existe um usuário com este username, por favor escolha outro para prosseguir." })
   }
 
-  users.push({
+  const user = {
     id: uuidv4(),
     name,
     username,
     todos: []
-  });
+  }
 
-  console.log(users)
-  return response.status(201).send();
+  users.push(user);
+  return response.status(201).json(user);
 
 });
 
@@ -67,31 +67,54 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
 
   user.todos.push(userTodos);
 
-  return response.status(201).send();
+  return response.status(201).json(userTodos);
 });
 
 app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
   const { title, deadline } = request.body;
   const { user } = request;
-  console.log("update down here");
-  
-  user.todos = { 
-    title, 
-    deadline,
+  const { id } = request.params;
+
+  const todo = user.todos.find( todo => todo.id = id );
+
+  if (!todo) {
+    return response.status(404).json({ error: "Todo not found."})
   }
 
-  console.log(user);
-  console.log("between");
+  todo.title = title;
+  todo.deadline = new Date(deadline);
   
-  return response.status(201).send({ title, deadline });
+  return response.send(todo);
 });
 
 app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { user } = request;
+  const { id } = request.params;
+
+  const todo = user.todos.find( todo => todo.id = id );
+  
+  if (!todo) {
+    return response.status(404).json({ error: "Todo not found."})
+  }
+
+  todo.done = true;
+
+  return response.json(todo);
 });
 
 app.delete('/todos/:id', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { user } = request;
+  const { id } = request.params;
+
+  const todoIndex = user.todos.findIndex( todo => todo.id = id );
+  
+  if ( todoIndex === -1 ) {
+    return response.status(404).json({ error: "Todo not found."})
+  }
+
+  user.todos.splice(todoIndex, 1);
+
+  return response.status(204).json();
 });
 
 module.exports = app;
